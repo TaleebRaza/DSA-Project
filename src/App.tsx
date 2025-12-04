@@ -44,13 +44,6 @@ interface CardProps {
   onClick: () => void;
 }
 
-interface PointerArrowProps {
-  label: string;
-  value: number | null;
-  color?: string;
-  direction?: "right" | "up";
-}
-
 type ViewState = "home" | "stack" | "queue";
 type HighlightState = "overflow" | "underflow" | "insert" | "remove" | null;
 
@@ -103,24 +96,6 @@ const Card = ({ title, icon: Icon, description, onClick }: CardProps) => (
         INITIALIZE <ArrowRight size={16} />
       </div>
     </div>
-  </div>
-);
-
-const PointerArrow = ({
-  label,
-  value,
-  color = "text-cyan-400",
-  direction = "right",
-}: PointerArrowProps) => (
-  <div
-    className={`flex items-center gap-2 ${color} font-mono text-xs font-bold transition-all duration-500 absolute z-20`}
-    style={direction === "right" ? { right: "-100px" } : { left: "-20px" }}
-  >
-    {direction === "right" && <ArrowRight className="rotate-180" size={16} />}
-    <span>
-      {label}:{value}
-    </span>
-    {direction === "up" && <ArrowRight className="-rotate-90" size={16} />}
   </div>
 );
 
@@ -338,7 +313,7 @@ export default function App() {
         <div className="relative z-10 max-w-4xl w-full space-y-12">
           <div className="text-center space-y-4">
             <h1 className="text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500 tracking-tight">
-              DSA<span className="text-white">.Project</span>
+              DSA<span className="text-white">.IO</span>
             </h1>
             <p className="text-xl text-slate-400 max-w-2xl mx-auto">
               Interactive memory allocation visualizer. Select a data structure
@@ -686,7 +661,7 @@ export default function App() {
 
                   {/* Actual Items Overlay */}
                   <div className="absolute inset-0 flex items-center px-4 gap-2 z-10 pointer-events-none">
-                    {items.map((item, index) => (
+                    {items.map((item) => (
                       <div
                         key={item.id}
                         className={`${item.color} w-16 h-16 shrink-0 rounded shadow-lg flex flex-col items-center justify-center text-white font-bold font-mono animate-in slide-in-from-right-8 fade-in duration-300`}
