@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, ReactNode } from "react";
 import {
   Play,
   Pause,
@@ -12,8 +12,47 @@ import {
   Settings,
   Database,
   Activity,
-  AlertCircle,
 } from "lucide-react";
+
+// --- Types & Interfaces ---
+
+interface Item {
+  id: number;
+  value: number;
+  color: string;
+}
+
+interface LogEntry {
+  id: number;
+  time: string;
+  message: string;
+  type: "info" | "success" | "error";
+}
+
+interface ButtonProps {
+  onClick: () => void;
+  disabled?: boolean;
+  children: ReactNode;
+  variant?: "primary" | "secondary" | "danger" | "ghost";
+  className?: string;
+}
+
+interface CardProps {
+  title: string;
+  icon: React.ElementType;
+  description: string;
+  onClick: () => void;
+}
+
+interface PointerArrowProps {
+  label: string;
+  value: number | null;
+  color?: string;
+  direction?: "right" | "up";
+}
+
+type ViewState = "home" | "stack" | "queue";
+type HighlightState = "overflow" | "underflow" | "insert" | "remove" | null;
 
 // --- Components ---
 
@@ -23,7 +62,7 @@ const Button = ({
   children,
   variant = "primary",
   className = "",
-}) => {
+}: ButtonProps) => {
   const baseStyle =
     "px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100";
 
@@ -48,7 +87,7 @@ const Button = ({
   );
 };
 
-const Card = ({ title, icon: Icon, description, onClick }) => (
+const Card = ({ title, icon: Icon, description, onClick }: CardProps) => (
   <div
     onClick={onClick}
     className="group relative bg-slate-800/50 backdrop-blur-md border border-slate-700 hover:border-cyan-500/50 rounded-2xl p-8 cursor-pointer transition-all duration-300 hover:shadow-[0_0_30px_rgba(6,182,212,0.15)] hover:-translate-y-1"
@@ -72,7 +111,7 @@ const PointerArrow = ({
   value,
   color = "text-cyan-400",
   direction = "right",
-}) => (
+}: PointerArrowProps) => (
   <div
     className={`flex items-center gap-2 ${color} font-mono text-xs font-bold transition-all duration-500 absolute z-20`}
     style={direction === "right" ? { right: "-100px" } : { left: "-20px" }}
@@ -88,19 +127,19 @@ const PointerArrow = ({
 // --- Main Application ---
 
 export default function App() {
-  const [view, setView] = useState("home"); // home, stack, queue
-  const [items, setItems] = useState([]);
-  const [maxSize, setMaxSize] = useState(8);
-  const [inputValue, setInputValue] = useState("");
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false); // Locks UI during animation
-  const [logs, setLogs] = useState([]);
-  const [highlightLine, setHighlightLine] = useState(null);
-  const [statusMessage, setStatusMessage] = useState("Idle");
+  const [view, setView] = useState<ViewState>("home");
+  const [items, setItems] = useState<Item[]>([]);
+  const [maxSize, setMaxSize] = useState<number>(8);
+  const [inputValue, setInputValue] = useState<string>("");
+  const [isPlaying, setIsPlaying] = useState<boolean>(false);
+  const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [highlightLine, setHighlightLine] = useState<HighlightState>(null);
+  const [statusMessage, setStatusMessage] = useState<string>("Idle");
 
   // Refs for auto-scroll and interval
-  const logsEndRef = useRef(null);
-  const intervalRef = useRef(null);
+  const logsEndRef = useRef<HTMLDivElement>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const colors = [
     "bg-blue-500",
@@ -115,9 +154,13 @@ export default function App() {
 
   // --- Helpers ---
 
-  const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  const wait = (ms: number) =>
+    new Promise((resolve) => setTimeout(resolve, ms));
 
-  const addLog = (message, type = "info") => {
+  const addLog = (
+    message: string,
+    type: "info" | "success" | "error" = "info"
+  ) => {
     const timestamp = new Date().toLocaleTimeString().split(" ")[0];
     setLogs((prev) => [
       ...prev,
@@ -138,7 +181,7 @@ export default function App() {
 
   // --- Core Logic with Animations ---
 
-  const handlePushEnqueue = async (val = null) => {
+  const handlePushEnqueue = async (val: number | null = null) => {
     if (isProcessing) return;
     setIsProcessing(true);
 
@@ -161,8 +204,13 @@ export default function App() {
     }
 
     // Step 2: Prepare Value
-    const valueToAdd = val || inputValue || Math.floor(Math.random() * 100);
-    const newItem = {
+    const valueToAdd =
+      val !== null
+        ? val
+        : inputValue
+        ? parseInt(inputValue)
+        : Math.floor(Math.random() * 100);
+    const newItem: Item = {
       id: Date.now() + Math.random(),
       value: valueToAdd,
       color: generateRandomColor(),
@@ -262,19 +310,22 @@ export default function App() {
   useEffect(() => {
     if (isPlaying && !isProcessing) {
       intervalRef.current = setInterval(() => {
+        // We need to check items.length, but inside setInterval closures can be tricky.
+        // Using a functional update pattern in handlePopDequeue or checking via ref is safer,
+        // but since items is a dependency of useEffect, the interval is recreated on change.
         if (items.length > 0) {
-          // We need to trigger the async function but interval doesn't await.
-          // However, the `isProcessing` flag protects against overlap.
           handlePopDequeue();
         } else {
           setIsPlaying(false);
           addLog("System: Auto-process complete.", "info");
         }
-      }, 1500); // Slower interval to account for animation delays
+      }, 1500);
     } else {
-      clearInterval(intervalRef.current);
+      if (intervalRef.current) clearInterval(intervalRef.current);
     }
-    return () => clearInterval(intervalRef.current);
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
   }, [isPlaying, isProcessing, items]);
 
   // --- Render Views ---
@@ -287,7 +338,7 @@ export default function App() {
         <div className="relative z-10 max-w-4xl w-full space-y-12">
           <div className="text-center space-y-4">
             <h1 className="text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500 tracking-tight">
-              DSA<span className="text-white">.IO</span>
+              DSA<span className="text-white">.Project</span>
             </h1>
             <p className="text-xl text-slate-400 max-w-2xl mx-auto">
               Interactive memory allocation visualizer. Select a data structure
