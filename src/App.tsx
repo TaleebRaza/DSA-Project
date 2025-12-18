@@ -493,7 +493,7 @@ export default function App() {
         <div className="relative z-10 max-w-5xl w-full space-y-12">
           <div className="text-center space-y-4">
             <h1 className="text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500 tracking-tight">
-              STRUCT<span className="text-white">.IO</span>
+              DSA<span className="text-white">.Project</span>
             </h1>
             <p className="text-xl text-slate-400 max-w-2xl mx-auto">
               Select a Data Structure Architecture
