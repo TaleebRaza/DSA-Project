@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, ReactNode } from 'react';
-import { Play, Pause, StepForward, RotateCcw, ArrowRight, Layers, List, Zap, Terminal, Settings, Database, Activity, RefreshCw, AlertOctagon, ArrowUp, Star, ArrowDown } from 'lucide-react';
+import { Play, Pause, StepForward, RotateCcw, ArrowRight, Layers, List, Zap, Terminal, Settings, Database, Activity, RefreshCw, ArrowUp, Star, ArrowDown } from 'lucide-react';
 
 // --- Types & Interfaces ---
 
